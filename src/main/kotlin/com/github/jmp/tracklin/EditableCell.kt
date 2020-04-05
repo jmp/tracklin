@@ -6,6 +6,7 @@ import javafx.scene.control.ContentDisplay
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TablePosition
+import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import javafx.util.Callback
 import javafx.util.StringConverter
@@ -24,26 +25,34 @@ class EditableCell<S, T>(
     }
 
     override fun commitEdit(item: T?) {
+        println("Committing $item")
         if (!isEditing && item != getItem()) {
-            tableView?.let {
-                Event.fireEvent(
-                    tableColumn,
-                    TableColumn.CellEditEvent(
-                        it,
-                        TablePosition(it, index, tableColumn),
-                        TableColumn.editCommitEvent(),
-                        item
-                    )
+            val table: TableView<S>? = tableView
+            if (table != null) {
+                val column = tableColumn
+                val event: TableColumn.CellEditEvent<S, T?> = TableColumn.CellEditEvent(
+                    table,
+                    TablePosition(table, index, column),
+                    TableColumn.editCommitEvent(), item
                 )
+                Event.fireEvent(column, event)
             }
         }
         super.commitEdit(item)
         contentDisplay = ContentDisplay.TEXT_ONLY
     }
 
+    override fun cancelEdit() {
+        super.cancelEdit()
+        tableView.refresh()
+        contentDisplay = ContentDisplay.TEXT_ONLY
+    }
+
     init {
         itemProperty().addListener { _, _, newItem: T? ->
-            text = newItem?.let { converter.toString(newItem) }
+            text = newItem?.let {
+                converter.toString(newItem)
+            }
         }
         graphic = textField
         contentDisplay = ContentDisplay.TEXT_ONLY
@@ -51,8 +60,8 @@ class EditableCell<S, T>(
             commitEdit(converter.fromString(textField.text))
         }
         textField.focusedProperty()
-            .addListener { _, _, isNowFocused: Boolean ->
-                if (!isNowFocused) {
+            .addListener { _, wasFocused: Boolean, isNowFocused: Boolean ->
+                if (!isNowFocused || wasFocused) {
                     commitEdit(converter.fromString(textField.text))
                 }
             }
