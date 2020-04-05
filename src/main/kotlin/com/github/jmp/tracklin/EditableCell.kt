@@ -2,7 +2,11 @@ package com.github.jmp.tracklin
 
 import javafx.event.Event
 import javafx.event.EventHandler
-import javafx.scene.control.*
+import javafx.scene.control.ContentDisplay
+import javafx.scene.control.TableCell
+import javafx.scene.control.TableColumn
+import javafx.scene.control.TablePosition
+import javafx.scene.control.TextField
 import javafx.util.Callback
 import javafx.util.StringConverter
 import javafx.util.converter.DefaultStringConverter

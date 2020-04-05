@@ -6,17 +6,25 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.scene.Node
-import javafx.scene.control.*
+import javafx.scene.control.Button
+import javafx.scene.control.MenuItem
+import javafx.scene.control.TableColumn
+import javafx.scene.control.TableView
+import javafx.scene.control.ContextMenu
+import javafx.scene.control.SelectionMode
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import java.io.FileWriter
 import java.io.IOException
+
+private const val SELECTION_DELAY = 50L
 
 /**
  * Controller for the JavaFX components.
  *
  * Most of the application logic happens here.
  */
+@Suppress("TooManyFunctions")
 class Controller {
     @FXML
     lateinit var startButton: Button
@@ -35,43 +43,31 @@ class Controller {
 
     @FXML
     fun initialize() {
-        createContextMenu()
-        initializeSelectionModel()
-    }
-
-    private val filePicker = FilePicker()
-
-    /**
-     * Create and set a context menu for the hours table.
-     */
-    private fun createContextMenu() {
-        val selectedItems = { hoursTable.selectionModel.selectedItems }
+        // Create and set a context menu for the hours table
         val removeItem = MenuItem("Remove").apply {
-            onAction = EventHandler {
-                removeHours(selectedItems())
-            }
+            onAction = EventHandler { removeHours(selectedHours) }
         }
         val contextMenu = ContextMenu(removeItem).apply {
-            onShown = EventHandler {
-                removeItem.isDisable = selectedItems().isEmpty()
-            }
+            onShown = EventHandler { removeItem.isDisable = selectedHours.isEmpty() }
         }
         hoursTable.contextMenu = contextMenu
-    }
 
-    /**
-     * Set the multiselection mode for the hours table.
-     */
-    private fun initializeSelectionModel() {
+        // Set the multiselection mode for the hours table
         hoursTable.selectionModel.selectionMode = SelectionMode.MULTIPLE
     }
+
+    private var isTracking = false
+    private val filePicker = FilePicker()
+    private val allHours
+        get() = hoursTable.items
+    private val selectedHours
+        get() = hoursTable.selectionModel.selectedItems
 
     /**
      * Handle start button click event.
      */
     fun onStartClick() {
-        updateLastTaskEndTime()
-        startTask()
+        startTracking()
         editLastTask()
     }
 
@@ -83,18 +79,18 @@ class Controller {
      * tasks exist, then it will be set to a dummy name. The end time of the new task
      * will be empty by default.
      */
-    private fun startTask() {
-        val startTime = getTimeAsString()
-        hoursTable.items.add(
+    private fun startTracking() {
+        updateLastTaskEndTime()
+        allHours.add(
             Hours(
-                startTime,
+                getTimeAsString(),
                 "",
                 lastTaskName()
             )
         )
         startButton.text = SWITCH_BUTTON_TEXT
         stopButton.isDisable = false
-        isTrackingStarted = true
+        isTracking = true
     }
 
     /**
@@ -102,9 +98,9 @@ class Controller {
      *
      * This will update the end time of the current task to the current time and stop tracking.
      */
-    private fun stopTask() {
+    private fun stopTracking() {
         updateLastTaskEndTime()
-        isTrackingStarted = false
+        isTracking = false
     }
 
     /**
@@ -112,20 +108,19 @@ class Controller {
      * @return the last task name as a String.
      */
     private fun lastTaskName(): String =
-        if (hoursTable.items.isNotEmpty()) {
-            hoursTable.items.last().task
+        if (allHours.isNotEmpty()) {
+            allHours.last().task
         } else NEW_TASK_NAME
 
     /**
      * Sets the end time of the last task row to the current time.
      */
     private fun updateLastTaskEndTime() {
-        val data: MutableList<Hours> = hoursTable.items
-        if (data.isNotEmpty() && isTrackingStarted) {
-            val lastIndex = data.size - 1
-            val lastHours = data[lastIndex]
+        val hours = allHours
+        if (hours.isNotEmpty() && isTracking) {
+            val lastHours = hours.last()
             lastHours.endTime = getTimeAsString()
-            data[lastIndex] = lastHours
+            hours[hours.lastIndex] = lastHours
         }
     }
 
@@ -135,7 +130,7 @@ class Controller {
     private fun editLastTask() = Thread(Runnable {
         hoursTable.selectionModel.clearSelection()
         try {
-            Thread.sleep(50L)
+            Thread.sleep(SELECTION_DELAY)
         } catch (e: InterruptedException) {
             e.printStackTrace()
         }
@@ -153,7 +148,7 @@ class Controller {
      * Stop button click handler.
      */
     fun onStopClick() {
-        stopTask()
+        stopTracking()
         resetButtonStates()
     }
 
@@ -168,7 +163,7 @@ class Controller {
         filePicker.pickFile(event.window)?.let {
             export(
                 FileWriter(it),
-                hoursTable.items
+                allHours
             )
         }
     } catch (e: IOException) {
@@ -180,8 +175,7 @@ class Controller {
      * @param event event for editing the table cell
      */
     fun onStartTimeEditCommit(event: TableColumn.CellEditEvent<Hours, String?>) {
-        println("onStartTimeEditCommit: ${event.newValue}")
-        event.rowValue.startTime = event.newValue!!
+        event.rowValue.startTime = event.newValue ?: ""
     }
 
     /**
@@ -189,8 +183,7 @@ class Controller {
      * @param event event for editing the table cell
      */
     fun onEndTimeEditCommit(event: TableColumn.CellEditEvent<Hours, String?>) {
-        println("onEndTimeEditCommit: ${event.newValue}")
-        event.rowValue.endTime = event.newValue!!
+        event.rowValue.endTime = event.newValue ?: ""
     }
 
     /**
@@ -198,10 +191,7 @@ class Controller {
      * @param event event for editing the table cell
      */
     fun onTaskEditCommit(event: TableColumn.CellEditEvent<Hours, String?>) {
-        println("onTaskEditCommit: ${event.newValue}")
-        event.newValue?.let {
-            event.rowValue.task = it
-        }
+        event.rowValue.task = event.newValue ?: ""
     }
 
     /**
@@ -209,10 +199,9 @@ class Controller {
      * @param keyEvent event for the key press
      */
     fun onKeyPressed(keyEvent: KeyEvent) {
-        val selectedHours = hoursTable.selectionModel.selectedItems
-        val isDeletePressed = keyEvent.code == KeyCode.DELETE
-        if (selectedHours.isNotEmpty() && isDeletePressed) {
+        if (keyEvent.code == KeyCode.DELETE) {
             removeHours(selectedHours)
+            keyEvent.consume()
         }
     }
 
@@ -221,18 +210,12 @@ class Controller {
      * @param items hours to remove
      */
     private fun removeHours(items: ObservableList<Hours>) {
-        val allItems = hoursTable.items
-        println("items before:")
-        allItems.forEach(::println)
-        println("---")
+        val allItems = allHours
         val isLastDeleted = items.isNotEmpty() && items.contains(allItems.last())
         allItems.removeAll(items)
-        println("items after:")
-        allItems.forEach(::println)
-        println("---")
         if (isLastDeleted || allItems.isEmpty()) {
             resetButtonStates()
-            isTrackingStarted = false
+            isTracking = false
         }
     }
 
@@ -244,13 +227,12 @@ class Controller {
         startButton.isDisable = false
         startButton.requestFocus()
         stopButton.isDisable = true
-        exportButton.isDisable = hoursTable.items.isEmpty()
+        exportButton.isDisable = allHours.isEmpty()
     }
 
     companion object {
         private const val NEW_TASK_NAME = "New task"
         private const val SWITCH_BUTTON_TEXT = "Switch"
         private const val START_BUTTON_TEXT = "Start"
-        private var isTrackingStarted = false
     }
 }

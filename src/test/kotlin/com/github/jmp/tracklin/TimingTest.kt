@@ -2,7 +2,7 @@ package com.github.jmp.tracklin
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.Calendar
 
 class TimingTest {
     @Test

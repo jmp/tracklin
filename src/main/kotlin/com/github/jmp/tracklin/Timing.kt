@@ -1,7 +1,8 @@
 package com.github.jmp.tracklin
 
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Calendar
+import java.util.Date
 
 /**
  * Get the current time.
