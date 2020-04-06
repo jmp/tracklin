@@ -87,9 +87,8 @@ class Controller {
         updateLastTaskEndTime()
         allHours.add(
             Hours(
-                getTimeAsString(),
-                "",
-                lastTaskName()
+                startTime = getTimeAsString(),
+                task = lastTaskName()
             )
         )
         startButton.text = SWITCH_BUTTON_TEXT
