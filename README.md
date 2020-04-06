@@ -1,6 +1,6 @@
 # Tracklin
 
-[![build](https://github.com/jmp/tracklin/workflows/build/badge.svg)](https://github.com/jmp/tracklin/actions?query=workflow%3ACI)
+[![build](https://github.com/jmp/tracklin/workflows/build/badge.svg)](https://github.com/jmp/tracklin/actions?query=workflow%3Abuild)
 
 A small time tracker written in Kotlin, using JavaFX. It is currently very
 limited, but can do basic time tracking of tasks and export the results into
