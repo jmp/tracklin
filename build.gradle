@@ -43,3 +43,7 @@ compileTestKotlin {
 test {
     useJUnitPlatform()
 }
+
+shadowJar {
+    archiveName = "${baseName}.${extension}"
+}
