@@ -24,20 +24,19 @@ class EditableCell<S, T>(
         textField.requestFocus()
     }
 
-    override fun commitEdit(item: T?) {
-        if (!isEditing && item != getItem()) {
-            tableView?.let {
-                val column = tableColumn
-                val event = TableColumn.CellEditEvent(
-                    it,
-                    TablePosition(it, index, column),
+    override fun commitEdit(newValue: T?) {
+        if (!isEditing && tableView != null) {
+            Event.fireEvent(
+                tableColumn,
+                TableColumn.CellEditEvent(
+                    tableView,
+                    TablePosition(tableView, index, tableColumn),
                     TableColumn.editCommitEvent(),
-                    item
+                    newValue
                 )
-                Event.fireEvent(column, event)
-            }
+            )
         }
-        super.commitEdit(item)
+        super.commitEdit(newValue)
         contentDisplay = ContentDisplay.TEXT_ONLY
     }
 
@@ -49,21 +48,18 @@ class EditableCell<S, T>(
 
     init {
         itemProperty().addListener { _, _, newItem: T? ->
-            text = newItem?.let {
-                converter.toString(newItem)
-            }
+            text = converter.toString(newItem)
         }
         graphic = textField
         contentDisplay = ContentDisplay.TEXT_ONLY
-        textField.onAction = EventHandler {
-            commitEdit(converter.fromString(textField.text))
-        }
-        textField.focusedProperty()
-            .addListener { _, wasFocused: Boolean, isNowFocused: Boolean ->
-                if (!isNowFocused || wasFocused) {
-                    commitEdit(converter.fromString(textField.text))
+        with(textField) {
+            onAction = EventHandler { commitEdit(converter.fromString(text)) }
+            focusedProperty().addListener { _, _, isNowFocused: Boolean ->
+                if (!isNowFocused) {
+                    commitEdit(converter.fromString(text))
                 }
             }
+        }
     }
 
     companion object {
