@@ -13,12 +13,12 @@ private const val CSV_SEPARATOR = ";"
  */
 fun export(writer: Writer, items: List<Hours>) =
     with(PrintWriter(writer)) {
-        items.forEach { item ->
-            print(item.startTime)
+        items.forEach {
+            print(it.startTime)
             print(CSV_SEPARATOR)
-            print(item.endTime)
+            print(it.endTime)
             print(CSV_SEPARATOR)
-            print(item.task)
+            print(it.task)
             println()
         }
     }
