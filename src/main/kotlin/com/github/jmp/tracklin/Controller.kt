@@ -48,7 +48,7 @@ class Controller {
     @FXML
     fun initialize() {
         // Create and set a context menu for the hours table
-        val removeItem = MenuItem("Remove").apply {
+        val removeItem = MenuItem(REMOVE_ITEM_TEXT).apply {
             onAction = EventHandler { removeHours(selectedHours) }
         }
         val contextMenu = ContextMenu(removeItem).apply {
@@ -231,5 +231,6 @@ class Controller {
         private const val NEW_TASK_NAME = "New task"
         private const val SWITCH_BUTTON_TEXT = "Switch"
         private const val START_BUTTON_TEXT = "Start"
+        private const val REMOVE_ITEM_TEXT = "Remove"
     }
 }
