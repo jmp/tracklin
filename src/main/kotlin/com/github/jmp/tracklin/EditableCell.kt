@@ -18,10 +18,12 @@ class EditableCell<S, T>(
 
     override fun startEdit() {
         super.startEdit()
-        textField.text = converter.toString(item)
         contentDisplay = ContentDisplay.GRAPHIC_ONLY
-        textField.selectAll()
-        textField.requestFocus()
+        with(textField) {
+            text = converter.toString(item)
+            selectAll()
+            requestFocus()
+        }
     }
 
     override fun commitEdit(newValue: T?) {
@@ -50,9 +52,9 @@ class EditableCell<S, T>(
         itemProperty().addListener { _, _, newItem: T? ->
             text = converter.toString(newItem)
         }
-        graphic = textField
         contentDisplay = ContentDisplay.TEXT_ONLY
         with(textField) {
+            graphic = this
             onAction = EventHandler { commitEdit(converter.fromString(text)) }
             focusedProperty().addListener { _, _, isNowFocused: Boolean ->
                 if (!isNowFocused) {
