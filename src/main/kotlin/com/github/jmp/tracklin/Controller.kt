@@ -1,6 +1,5 @@
 package com.github.jmp.tracklin
 
-import javafx.application.Platform
 import javafx.collections.ObservableList
 import javafx.event.ActionEvent
 import javafx.event.EventHandler
@@ -14,6 +13,11 @@ import javafx.scene.control.ContextMenu
 import javafx.scene.control.SelectionMode
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.javafx.JavaFx
+import kotlinx.coroutines.launch
 import java.io.FileWriter
 import java.io.IOException
 
@@ -127,22 +131,16 @@ class Controller {
     /**
      * Focus the last item and and activate its task cell for editing.
      */
-    private fun editLastTask() = Thread(Runnable {
-        hoursTable.selectionModel.clearSelection()
-        try {
-            Thread.sleep(SELECTION_DELAY)
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
+    private fun editLastTask() = with(hoursTable) {
+        selectionModel.clearSelection()
+        val lastIndex = items.lastIndex
+        selectionModel.select(lastIndex)
+        selectionModel.focus(lastIndex)
+        GlobalScope.launch(Dispatchers.JavaFx) {
+            delay(SELECTION_DELAY)
+            edit(items.lastIndex, taskColumn)
         }
-        Platform.runLater {
-            with(hoursTable) {
-                val lastIndex = items.lastIndex
-                selectionModel.select(lastIndex)
-                selectionModel.focus(lastIndex)
-                edit(lastIndex, taskColumn)
-            }
-        }
-    }).start()
+    }
 
     /**
      * Stop button click handler.

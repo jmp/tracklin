@@ -6,7 +6,6 @@ import javafx.scene.control.ContentDisplay
 import javafx.scene.control.TableCell
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TablePosition
-import javafx.scene.control.TableView
 import javafx.scene.control.TextField
 import javafx.util.Callback
 import javafx.util.StringConverter
@@ -21,19 +20,19 @@ class EditableCell<S, T>(
         super.startEdit()
         textField.text = converter.toString(item)
         contentDisplay = ContentDisplay.GRAPHIC_ONLY
+        textField.selectAll()
         textField.requestFocus()
     }
 
     override fun commitEdit(item: T?) {
-        println("Committing $item")
         if (!isEditing && item != getItem()) {
-            val table: TableView<S>? = tableView
-            if (table != null) {
+            tableView?.let {
                 val column = tableColumn
-                val event: TableColumn.CellEditEvent<S, T?> = TableColumn.CellEditEvent(
-                    table,
-                    TablePosition(table, index, column),
-                    TableColumn.editCommitEvent(), item
+                val event = TableColumn.CellEditEvent(
+                    it,
+                    TablePosition(it, index, column),
+                    TableColumn.editCommitEvent(),
+                    item
                 )
                 Event.fireEvent(column, event)
             }
