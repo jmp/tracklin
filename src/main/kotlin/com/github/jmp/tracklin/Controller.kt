@@ -74,23 +74,26 @@ class Controller {
 
     private var isIdlePromptOpen = false
 
-    private val idleTracker: IdleTracker = IdleTracker(
+    private val idleTracker = IdleTracker(
         {
             if (isTracking && !isIdlePromptOpen) {
                 isIdlePromptOpen = true
                 GlobalScope.launch(Dispatchers.JavaFx) {
                     val alert = Alert(Alert.AlertType.CONFIRMATION)
                     alert.title = "You're back!"
-                    alert.headerText = "You were idle for ${TimeUnit.MILLISECONDS.toMinutes(it)} minutes."
-                    alert.contentText =
-                        "The current task is \"${lastTaskName()}\".\n" +
-                        "Do you want to mark the elapsed time to a different task?"
-                    val yesButton = ButtonType("Mark to a different task")
-                    val noButton = ButtonType("Keep current task")
-                    alert.buttonTypes.setAll(yesButton, noButton)
+                    alert.headerText =
+                        "You were idle for ${TimeUnit.MILLISECONDS.toMinutes(it)} minutes.\n" +
+                        "The current task is \"${lastTaskName()}\"."
+                    alert.contentText = "How would you like to mark the spent time?"
+                    val newTaskButton = ButtonType("Different task")
+                    val stopButton = ButtonType("End current at ${TimeUnit.MILLISECONDS.toMinutes(it)} mins ago")
+                    val keepTaskButton = ButtonType("Keep current task")
+                    alert.buttonTypes.setAll(newTaskButton, stopButton, keepTaskButton)
                     val result = alert.showAndWait()
-                    if (result.get() == yesButton) {
+                    if (result.get() == newTaskButton) {
                         markIdleTimeAsNewTask(it)
+                    } else if (result.get() == stopButton) {
+                        markIdleTimeAsEmpty(it)
                     }
                     isIdlePromptOpen = false
                 }
@@ -108,6 +111,12 @@ class Controller {
         hours.last().startTime = getTimeAsString(lastTaskEndTime)
         hours[hours.lastIndex - 1].task = NEW_TASK_NAME
         editTask(hours.lastIndex - 1)
+    }
+
+    private fun markIdleTimeAsEmpty(idleTime: Long) {
+        val lastTaskEndTime = Date(System.currentTimeMillis() - idleTime)
+        onStopClick()
+        updateLastTaskEndTime(lastTaskEndTime)
     }
 
     /**
