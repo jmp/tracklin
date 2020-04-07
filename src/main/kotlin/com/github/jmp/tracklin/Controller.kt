@@ -26,7 +26,7 @@ import java.util.Date
 import java.util.concurrent.TimeUnit
 
 private const val SELECTION_DELAY = 50L
-private const val IDLE_DELAY = 1000L * 60L * 30L
+private const val IDLE_DELAY = 1000L * 60L * 5L
 
 /**
  * Controller for the JavaFX components.
