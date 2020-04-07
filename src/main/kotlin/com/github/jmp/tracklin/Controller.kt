@@ -5,12 +5,14 @@ import javafx.event.ActionEvent
 import javafx.event.EventHandler
 import javafx.fxml.FXML
 import javafx.scene.Node
+import javafx.scene.control.Alert
 import javafx.scene.control.Button
+import javafx.scene.control.ButtonType
+import javafx.scene.control.ContextMenu
 import javafx.scene.control.MenuItem
+import javafx.scene.control.SelectionMode
 import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
-import javafx.scene.control.ContextMenu
-import javafx.scene.control.SelectionMode
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
 import kotlinx.coroutines.Dispatchers
@@ -20,8 +22,11 @@ import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
 import java.io.FileWriter
 import java.io.IOException
+import java.util.Date
+import java.util.concurrent.TimeUnit
 
 private const val SELECTION_DELAY = 50L
+private const val IDLE_DELAY = 1000L * 60L * 30L
 
 /**
  * Controller for the JavaFX components.
@@ -66,6 +71,44 @@ class Controller {
         get() = hoursTable.items
     private val selectedHours
         get() = hoursTable.selectionModel.selectedItems
+
+    private var isIdlePromptOpen = false
+
+    private val idleTracker: IdleTracker = IdleTracker(
+        {
+            if (isTracking && !isIdlePromptOpen) {
+                isIdlePromptOpen = true
+                GlobalScope.launch(Dispatchers.JavaFx) {
+                    val alert = Alert(Alert.AlertType.CONFIRMATION)
+                    alert.title = "You're back!"
+                    alert.headerText = "You were idle for ${TimeUnit.MILLISECONDS.toMinutes(it)} minutes."
+                    alert.contentText =
+                        "The current task is \"${lastTaskName()}\".\n" +
+                        "Do you want to mark the elapsed time to a different task?"
+                    val yesButton = ButtonType("Mark to a different task")
+                    val noButton = ButtonType("Keep current task")
+                    alert.buttonTypes.setAll(yesButton, noButton)
+                    val result = alert.showAndWait()
+                    if (result.get() == yesButton) {
+                        markIdleTimeAsNewTask(it)
+                    }
+                    isIdlePromptOpen = false
+                }
+            }
+        },
+        IDLE_DELAY
+    )
+
+    private fun markIdleTimeAsNewTask(idleTime: Long) {
+        val lastTaskEndTime = Date(System.currentTimeMillis() - idleTime)
+        val hours = allHours
+        hours.last().endTime = getTimeAsString(lastTaskEndTime)
+        isTracking = false
+        startTracking()
+        hours.last().startTime = getTimeAsString(lastTaskEndTime)
+        hours[hours.lastIndex - 1].task = NEW_TASK_NAME
+        editTask(hours.lastIndex - 1)
+    }
 
     /**
      * Handle start button click event.
@@ -116,14 +159,27 @@ class Controller {
         } else NEW_TASK_NAME
 
     /**
-     * Sets the end time of the last task row to the current time.
+     * Sets the end time of the last task row.
      */
-    private fun updateLastTaskEndTime() {
+    private fun updateLastTaskEndTime(date: Date = Date()) {
         val hours = allHours
         if (hours.isNotEmpty() && isTracking) {
             val lastHours = hours.last()
-            lastHours.endTime = getTimeAsString()
+            lastHours.endTime = getTimeAsString(date)
             hours[hours.lastIndex] = lastHours
+        }
+    }
+
+    /**
+     * Focus the second to last item and and activate its task cell for editing.
+     */
+    private fun editTask(index: Int) = with(hoursTable) {
+        selectionModel.clearSelection()
+        selectionModel.select(index)
+        selectionModel.focus(index)
+        GlobalScope.launch(Dispatchers.JavaFx) {
+            delay(SELECTION_DELAY)
+            edit(index, taskColumn)
         }
     }
 
@@ -132,12 +188,12 @@ class Controller {
      */
     private fun editLastTask() = with(hoursTable) {
         selectionModel.clearSelection()
-        val lastIndex = items.lastIndex
-        selectionModel.select(lastIndex)
-        selectionModel.focus(lastIndex)
+        val index = items.lastIndex
+        selectionModel.select(index)
+        selectionModel.focus(index)
         GlobalScope.launch(Dispatchers.JavaFx) {
             delay(SELECTION_DELAY)
-            edit(items.lastIndex, taskColumn)
+            edit(index, taskColumn)
         }
     }
 

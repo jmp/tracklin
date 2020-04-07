@@ -2,6 +2,7 @@ package com.github.jmp.tracklin
 
 import javafx.application.Application
 import javafx.stage.Stage
+import kotlin.system.exitProcess
 
 private const val TITLE = "Tracklin"
 private const val MAIN_FXML = "main.fxml"
@@ -15,6 +16,11 @@ class Tracklin : Application() {
             javaClass.getResource(STYLESHEET)
         )
         stage.show()
+    }
+
+    override fun stop() {
+        super.stop()
+        exitProcess(0)
     }
 
     companion object {
