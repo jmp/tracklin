@@ -12,6 +12,7 @@ a CSV file.
 * Fast switch to a different task
 * Detect idle time (5+ minutes) and based on user's choosing
   * assign the idle time to a different task, or
+  * mark the current task stopped when the idling began, or
   * keep the idle time allocated to the current task
 * Export recorded times to a CSV file
 
