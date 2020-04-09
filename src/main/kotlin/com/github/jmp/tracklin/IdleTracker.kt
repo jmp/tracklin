@@ -11,21 +11,21 @@ class IdleTracker(
     private val action: (idleTime: Long) -> Unit,
     private val idleTimeThreshold: Long
 ) {
-    private val keyboardHook = tryOrNull { GlobalKeyboardHook() }
-    private val mouseHook = tryOrNull { GlobalMouseHook() }
+    private var keyboardHook: GlobalKeyboardHook? = null
+    private var mouseHook: GlobalMouseHook? = null
+    private val inputListener = GlobalInputListener { handleIdleTime() }
     private var previousActivityTime = System.currentTimeMillis()
 
-    init {
-        keyboardHook?.addKeyListener(object : GlobalKeyListener {
-            override fun keyPressed(e: GlobalKeyEvent?) = handleIdleTime()
-            override fun keyReleased(e: GlobalKeyEvent?) = handleIdleTime()
-        })
-        mouseHook?.addMouseListener(object : GlobalMouseListener {
-            override fun mouseReleased(e: GlobalMouseEvent?) = handleIdleTime()
-            override fun mouseWheel(e: GlobalMouseEvent?) = handleIdleTime()
-            override fun mouseMoved(e: GlobalMouseEvent?) = handleIdleTime()
-            override fun mousePressed(e: GlobalMouseEvent?) = handleIdleTime()
-        })
+    fun startTracking() {
+        keyboardHook = tryOrNull { GlobalKeyboardHook() }
+        mouseHook = tryOrNull { GlobalMouseHook() }
+        keyboardHook?.addKeyListener(inputListener)
+        mouseHook?.addMouseListener(inputListener)
+    }
+
+    fun stopTracking() {
+        keyboardHook?.shutdownHook()
+        mouseHook?.shutdownHook()
     }
 
     private fun handleIdleTime() {
@@ -36,6 +36,17 @@ class IdleTracker(
         }
         previousActivityTime = now
     }
+}
+
+class GlobalInputListener(
+    private val onEvent: () -> Unit
+) : GlobalKeyListener, GlobalMouseListener {
+    override fun keyPressed(event: GlobalKeyEvent) = onEvent()
+    override fun keyReleased(event: GlobalKeyEvent) = onEvent()
+    override fun mouseReleased(event: GlobalMouseEvent?) = onEvent()
+    override fun mouseWheel(event: GlobalMouseEvent?) = onEvent()
+    override fun mouseMoved(event: GlobalMouseEvent?) = onEvent()
+    override fun mousePressed(event: GlobalMouseEvent?) = onEvent()
 }
 
 private fun <T> tryOrNull(expression: () -> T?) = try {

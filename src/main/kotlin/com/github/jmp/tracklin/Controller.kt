@@ -20,6 +20,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.javafx.JavaFx
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.FileWriter
 import java.io.IOException
 import java.util.Date
@@ -79,28 +80,40 @@ class Controller {
             if (isTracking && !isIdlePromptOpen) {
                 isIdlePromptOpen = true
                 GlobalScope.launch(Dispatchers.JavaFx) {
-                    val alert = Alert(Alert.AlertType.CONFIRMATION)
-                    alert.title = "You're back!"
-                    alert.headerText =
-                        "You were idle for ${TimeUnit.MILLISECONDS.toMinutes(it)} minutes.\n" +
-                        "The current task is \"${lastTaskName()}\"."
-                    alert.contentText = "How would you like to mark the spent time?"
-                    val newTaskButton = ButtonType("Different task")
-                    val stopButton = ButtonType("End current at ${TimeUnit.MILLISECONDS.toMinutes(it)} mins ago")
-                    val keepTaskButton = ButtonType("Keep current task")
-                    alert.buttonTypes.setAll(newTaskButton, stopButton, keepTaskButton)
-                    val result = alert.showAndWait()
-                    if (result.get() == newTaskButton) {
-                        markIdleTimeAsNewTask(it)
-                    } else if (result.get() == stopButton) {
-                        markIdleTimeAsEmpty(it)
-                    }
+                    showIdleDialog(it)
                     isIdlePromptOpen = false
                 }
             }
         },
         IDLE_DELAY
     )
+
+    init {
+        idleTracker.startTracking()
+    }
+
+    private suspend fun showIdleDialog(idleTime: Long) = withContext(Dispatchers.JavaFx) {
+        val idleMinutes = TimeUnit.MILLISECONDS.toMinutes(idleTime)
+        val newTaskButton = ButtonType("Different task")
+        val stopButton = ButtonType("End current at $idleMinutes mins ago")
+        val keepTaskButton = ButtonType("Keep current task")
+        val alert = Alert(Alert.AlertType.CONFIRMATION).apply {
+            title = "You're back!"
+            headerText =
+                "You were idle for $idleMinutes minutes.\n" +
+                "The current task is \"${lastTaskName()}\"."
+            contentText = "How would you like to mark the spent time?"
+            buttonTypes.setAll(
+                newTaskButton,
+                stopButton,
+                keepTaskButton
+            )
+        }
+        when (alert.showAndWait().get()) {
+            newTaskButton -> markIdleTimeAsNewTask(idleTime)
+            stopButton -> markIdleTimeAsEmpty(idleTime)
+        }
+    }
 
     private fun markIdleTimeAsNewTask(idleTime: Long) {
         val lastTaskEndTime = Date(System.currentTimeMillis() - idleTime)
