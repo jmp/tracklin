@@ -19,7 +19,6 @@ class Tracklin : Application() {
     }
 
     override fun stop() {
-        super.stop()
         exitProcess(0)
     }
 

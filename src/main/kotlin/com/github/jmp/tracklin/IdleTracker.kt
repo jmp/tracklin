@@ -11,16 +11,17 @@ class IdleTracker(
     private val action: (idleTime: Long) -> Unit,
     private val idleTimeThreshold: Long
 ) {
+    private val inputListener = GlobalInputListener { handleIdleTime() }
     private var keyboardHook: GlobalKeyboardHook? = null
     private var mouseHook: GlobalMouseHook? = null
-    private val inputListener = GlobalInputListener { handleIdleTime() }
-    private var previousActivityTime = System.currentTimeMillis()
+    private var previousActivityTime = 0L
 
     fun startTracking() {
         keyboardHook = tryOrNull { GlobalKeyboardHook() }
         mouseHook = tryOrNull { GlobalMouseHook() }
         keyboardHook?.addKeyListener(inputListener)
         mouseHook?.addMouseListener(inputListener)
+        previousActivityTime = System.currentTimeMillis()
     }
 
     fun stopTracking() {
@@ -36,17 +37,17 @@ class IdleTracker(
         }
         previousActivityTime = now
     }
-}
 
-class GlobalInputListener(
-    private val onEvent: () -> Unit
-) : GlobalKeyListener, GlobalMouseListener {
-    override fun keyPressed(event: GlobalKeyEvent) = onEvent()
-    override fun keyReleased(event: GlobalKeyEvent) = onEvent()
-    override fun mouseReleased(event: GlobalMouseEvent?) = onEvent()
-    override fun mouseWheel(event: GlobalMouseEvent?) = onEvent()
-    override fun mouseMoved(event: GlobalMouseEvent?) = onEvent()
-    override fun mousePressed(event: GlobalMouseEvent?) = onEvent()
+    private class GlobalInputListener(
+        private val onEvent: () -> Unit
+    ) : GlobalKeyListener, GlobalMouseListener {
+        override fun keyPressed(e: GlobalKeyEvent) = onEvent()
+        override fun keyReleased(e: GlobalKeyEvent) = onEvent()
+        override fun mouseReleased(e: GlobalMouseEvent?) = onEvent()
+        override fun mouseWheel(e: GlobalMouseEvent?) = onEvent()
+        override fun mouseMoved(e: GlobalMouseEvent?) = onEvent()
+        override fun mousePressed(e: GlobalMouseEvent?) = onEvent()
+    }
 }
 
 private fun <T> tryOrNull(expression: () -> T?) = try {
