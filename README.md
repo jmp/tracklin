@@ -6,6 +6,8 @@ A small time tracker written in Kotlin, using JavaFX. It is currently a bit
 limited, but can do basic time tracking of tasks and export the results into
 a CSV file.
 
+![animation](https://raw.githubusercontent.com/jmp/tracklin/master/animation.gif)
+
 ## Features
 
 * Start and stop recording time spent on tasks
