@@ -12,18 +12,13 @@ import java.io.File
 
 class FilePickerTest {
     @Test
-    fun smoke() {
-        FilePicker("Test", listOf())
-    }
-
-    @Test
     fun `pickFile opens a file chooser with the given arguments`() {
-        val chosenFile = File("Test File")
+        val returnedFile = File("Test File")
 
         mockkConstructor(FileChooser::class)
         every {
             anyConstructed<FileChooser>().showSaveDialog(any())
-        } returns chosenFile
+        } returns returnedFile
         every {
             anyConstructed<FileChooser>().extensionFilters.addAll(
                 any<Collection<FileChooser.ExtensionFilter>>()
@@ -37,8 +32,9 @@ class FilePickerTest {
         val title = "Test Title"
         val window = mockk<Window>()
         val filePicker = FilePicker(title, extensionFilters)
+        val pickedFile = filePicker.pickFile(window)
 
-        assertEquals(chosenFile, filePicker.pickFile(window))
+        assertEquals(returnedFile, pickedFile)
 
         verify { anyConstructed<FileChooser>().title = title }
         verify { anyConstructed<FileChooser>().extensionFilters.addAll(extensionFilters) }
