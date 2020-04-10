@@ -5,14 +5,13 @@ import javafx.stage.FileChooser.ExtensionFilter
 import javafx.stage.Window
 import java.io.File
 
-class FilePicker {
+class FilePicker(
+    title: String,
+    extensionFilters: List<ExtensionFilter>
+) {
     private val fileChooser = FileChooser().apply {
-        title = "Export"
-        extensionFilters.addAll(listOf(
-            ExtensionFilter("CSV Files (*.csv)", "*.csv"),
-            ExtensionFilter("Text Documents (*.txt)", "*.txt"),
-            ExtensionFilter("All Files (*.*)", "*.*")
-        ))
+        this.title = title
+        this.extensionFilters.addAll(extensionFilters)
     }
 
     private var previousDirectory = File(System.getProperty("user.home") ?: "")

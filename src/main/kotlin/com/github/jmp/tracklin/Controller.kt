@@ -15,6 +15,7 @@ import javafx.scene.control.TableColumn
 import javafx.scene.control.TableView
 import javafx.scene.input.KeyCode
 import javafx.scene.input.KeyEvent
+import javafx.stage.FileChooser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
@@ -67,7 +68,11 @@ class Controller {
     }
 
     private var isTracking = false
-    private val filePicker = FilePicker()
+    private val filePicker = FilePicker("Export", listOf(
+        FileChooser.ExtensionFilter("CSV Files (*.csv)", "*.csv"),
+        FileChooser.ExtensionFilter("Text Documents (*.txt)", "*.txt"),
+        FileChooser.ExtensionFilter("All Files (*.*)", "*.*")
+    ))
     private val allHours
         get() = hoursTable.items
     private val selectedHours
