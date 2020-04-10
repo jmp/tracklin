@@ -3,8 +3,8 @@
 [![build](https://github.com/jmp/tracklin/workflows/build/badge.svg)](https://github.com/jmp/tracklin/actions?query=workflow%3Abuild)
 
 A small time tracker written in Kotlin, using JavaFX. It is currently a bit
-limited, but can do basic time tracking of tasks and export the results into
-a CSV file.
+limited, but can do basic time tracking of tasks, detect idle time, and export
+the tracked hours as a CSV file.
 
 ![animation](https://raw.githubusercontent.com/jmp/tracklin/master/animation.gif)
 
