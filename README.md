@@ -40,7 +40,7 @@ Python is a snake) and "tracker" (because it's a time tracker). I eventually
 [rewrote][3] it in Java to learn a bit about [JavaFX][4], but kept the name.
 
 This repository contains the latest iteration of the time tracking tool,
-written in [Kotlin][5]. I changed the name to "Tracklin".
+written in [Kotlin][5] (hence the name "Tracklin").
 
 [1]: https://python.org
 [2]: https://wiki.python.org/moin/TkInter
